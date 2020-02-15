@@ -129,8 +129,10 @@ static struct key bindings[] = {
 	{ KEY_PPAGE,      SEL_PGUP },
 	/* Ctrl+D */
 	{ CONTROL('D'),   SEL_CTRL_D },
+	{ 'J',   	  SEL_CTRL_D },
 	/* Ctrl+U */
 	{ CONTROL('U'),   SEL_CTRL_U },
+	{ 'K',   	  SEL_CTRL_U },
 	/* First entry */
 	{ KEY_HOME,       SEL_HOME },
 	{ 'g',            SEL_HOME },
