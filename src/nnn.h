@@ -166,7 +166,7 @@ static struct key bindings[] = {
 	/* Mark a path to visit later */
 	{ ',',            SEL_PIN },
 	/* Filter */
-	{ '/',            SEL_FLTR },
+	{ 'N',            SEL_FLTR },
 	/* Toggle filter mode */
 	{ CONTROL('N'),   SEL_MFLTR },
 	/* Toggle hide .dot files */
