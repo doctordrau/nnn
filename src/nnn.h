@@ -117,6 +117,7 @@ static struct key bindings[] = {
 	/* Pure navigate inside */
 	{ KEY_RIGHT,      SEL_NAV_IN },
 	{ 'l',            SEL_NAV_IN },
+	{ CONTROL('J'),	  SEL_NAV_IN },
 	/* Next */
 	{ 'j',            SEL_NEXT },
 	{ KEY_DOWN,       SEL_NEXT },
@@ -188,7 +189,7 @@ static struct key bindings[] = {
 	/* Redraw window */
 	{ CONTROL('L'),   SEL_REDRAW },
 	/* Select current file path */
-	{ CONTROL('J'),   SEL_SEL },
+	/*{ CONTROL('J'),   SEL_SEL },*/
 	{ ' ',            SEL_SEL },
 	/* Toggle select multiple files */
 	{ 'm',            SEL_SELMUL },
