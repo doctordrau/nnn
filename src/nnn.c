@@ -295,7 +295,7 @@ typedef struct {
 /* Configuration, contexts */
 static settings cfg = {
 	0, /* filtermode */
-	0, /* mtimeorder */
+	1, /* mtimeorder */
 	0, /* sizeorder */
 	0, /* apparentsz */
 	0, /* blkorder */
