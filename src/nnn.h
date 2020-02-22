@@ -153,7 +153,7 @@ static struct key bindings[] = {
 	/* Go to / */
 	{ '`',            SEL_CDROOT },
 	/* Leader key */
-	{ 'b',            SEL_BOOKMARK },
+	{ 'i',            SEL_BOOKMARK },
 	{ CONTROL('_'),   SEL_BOOKMARK },
 	/* Cycle contexts in forward direction */
 	{ '\t',           SEL_CYCLE },
