@@ -319,7 +319,7 @@ static settings cfg = {
 	0, /* regex */
 	0, /* x11 */
 	0, /* trash */
-	1, /* mtime */
+	0, /* mtime */
 	0, /* cliopener */
 	0, /* waitedit */
 	1, /* rollover */
