@@ -32,12 +32,20 @@
 
 #include <curses.h>
 
-#define CONTROL(c) ((c) ^ 0x40)
+#define CONTROL(c) ((c) & 0x1f)
+
+#ifndef ESC
+#define ESC (27)
+#endif
+
+#ifndef DEL
+#define DEL (127)
+#endif
 
 /* Supported actions */
 enum action {
 	SEL_BACK = 1,
-	SEL_GOIN,
+	SEL_OPEN,
 	SEL_NAV_IN,
 	SEL_NEXT,
 	SEL_PREV,
@@ -53,13 +61,20 @@ enum action {
 	SEL_CDLAST,
 	SEL_CDROOT,
 	SEL_BOOKMARK,
+	SEL_REMOTE,
 	SEL_CYCLE,
 	SEL_CYCLER,
 	SEL_CTX1,
 	SEL_CTX2,
 	SEL_CTX3,
 	SEL_CTX4,
-	SEL_PIN,
+#ifdef CTX8
+	SEL_CTX5,
+	SEL_CTX6,
+	SEL_CTX7,
+	SEL_CTX8,
+#endif
+	SEL_MARK,
 	SEL_FLTR,
 	SEL_MFLTR,
 	SEL_HIDDEN,
@@ -81,9 +96,9 @@ enum action {
 	SEL_NEW,
 	SEL_RENAME,
 	SEL_RENAMEMUL,
-	SEL_REMOTE,
 	SEL_UMOUNT,
 	SEL_HELP,
+	SEL_AUTONEXT,
 	SEL_EDIT,
 	SEL_PLUGIN,
 	SEL_SHELL,
@@ -91,11 +106,15 @@ enum action {
 	SEL_RUNCMD,
 	SEL_LOCK,
 	SEL_SESSIONS,
-	SEL_AUTONEXT,
+	SEL_EXPORT,
+	SEL_TIMETYPE,
 	SEL_QUITCTX,
 	SEL_QUITCD,
 	SEL_QUIT,
 	SEL_QUITFAIL,
+#ifndef NOFIFO
+	SEL_FIFO,
+#endif
 #ifndef NOMOUSE
 	SEL_CLICK,
 #endif
@@ -112,8 +131,8 @@ static struct key bindings[] = {
 	{ KEY_LEFT,       SEL_BACK },
 	{ 'h',            SEL_BACK },
 	/* Inside or select */
-	{ KEY_ENTER,      SEL_GOIN },
-	{ '\r',           SEL_GOIN },
+	{ KEY_ENTER,      SEL_OPEN },
+	{ '\r',           SEL_OPEN },
 	/* Pure navigate inside */
 	{ KEY_RIGHT,      SEL_NAV_IN },
 	{ 'l',            SEL_NAV_IN },
@@ -155,6 +174,8 @@ static struct key bindings[] = {
 	/* Leader key */
 	{ 'i',            SEL_BOOKMARK },
 	{ CONTROL('_'),   SEL_BOOKMARK },
+	/* Connect to server over SSHFS */
+	{ 'c',            SEL_REMOTE },
 	/* Cycle contexts in forward direction */
 	{ '\t',           SEL_CYCLE },
 	/* Cycle contexts in reverse direction */
@@ -164,8 +185,14 @@ static struct key bindings[] = {
 	{ '2',            SEL_CTX2 },
 	{ '3',            SEL_CTX3 },
 	{ '4',            SEL_CTX4 },
+#ifdef CTX8
+	{ '5',            SEL_CTX5 },
+	{ '6',            SEL_CTX6 },
+	{ '7',            SEL_CTX7 },
+	{ '8',            SEL_CTX8 },
+#endif
 	/* Mark a path to visit later */
-	{ ',',            SEL_PIN },
+	{ ',',            SEL_MARK },
 	/* Filter */
 	{ '/',            SEL_FLTR },
 	{ 'N',            SEL_FLTR },
@@ -173,7 +200,6 @@ static struct key bindings[] = {
 	{ CONTROL('N'),   SEL_MFLTR },
 	/* Toggle hide .dot files */
 	{ '.',            SEL_HIDDEN },
-	{ KEY_F(5),       SEL_HIDDEN },
 	/* Detailed listing */
 	{ 'd',            SEL_DETAIL },
 	/* File details */
@@ -219,17 +245,16 @@ static struct key bindings[] = {
 	{ CONTROL('R'),   SEL_RENAME },
 	/* Rename contents of current dir */
 	{ 'r',            SEL_RENAMEMUL },
-	/* Connect to server over SSHFS */
-	{ 'c',            SEL_REMOTE },
 	/* Disconnect a SSHFS mount point */
 	{ 'u',            SEL_UMOUNT },
 	/* Show help */
 	{ '?',            SEL_HELP },
+	/* Quit a context */
+	{ '+',            SEL_AUTONEXT },
 	/* Edit in EDITOR */
 	{ 'e',            SEL_EDIT },
 	/* Run a plugin */
 	{ ';',            SEL_PLUGIN },
-	{ CONTROL('S'),   SEL_PLUGIN },
 	/* Run command */
 	{ '!',            SEL_SHELL },
 	{ CONTROL(']'),   SEL_SHELL },
@@ -241,8 +266,10 @@ static struct key bindings[] = {
 	{ '0',            SEL_LOCK },
 	/* Manage sessions */
 	{ 's',            SEL_SESSIONS },
-	/* Quit a context */
-	{ '+',            SEL_AUTONEXT },
+	/* Export list */
+	{ '>',            SEL_EXPORT },
+	/* Set time type */
+	{ 'T',            SEL_TIMETYPE },
 	/* Quit a context */
 	{ 'q',            SEL_QUITCTX },
 	/* Change dir on quit */
@@ -251,6 +278,10 @@ static struct key bindings[] = {
 	{ CONTROL('Q'),   SEL_QUIT },
 	/* Quit with an error code */
 	{ 'Q',            SEL_QUITFAIL },
+#ifndef NOFIFO
+	/* Send hovered path to NNN_FIFO */
+	{ ESC,            SEL_FIFO },
+#endif
 #ifndef NOMOUSE
 	{ KEY_MOUSE,      SEL_CLICK },
 #endif

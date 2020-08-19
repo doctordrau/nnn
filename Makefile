@@ -2,6 +2,8 @@ VERSION = $(shell grep -m1 VERSION $(SRC) | cut -f 2 -d'"')
 
 PREFIX ?= /usr/local
 MANPREFIX ?= $(PREFIX)/share/man
+DESKTOPPREFIX ?= $(PREFIX)/share/applications
+DESKTOPICONPREFIX ?= $(PREFIX)/share/icons/hicolor
 STRIP ?= strip
 PKG_CONFIG ?= pkg-config
 INSTALL ?= install
@@ -9,9 +11,15 @@ CP ?= cp
 
 CFLAGS_OPTIMIZATION ?= -O3
 
-O_DEBUG := 0
+O_DEBUG := 0  # debug binary
 O_NORL := 0  # no readline support
+O_PCRE := 0  # link with PCRE library
 O_NOLOC := 0  # no locale support
+O_NOMOUSE := 0  # no mouse support
+O_NOBATCH := 0  # no built-in batch renamer
+O_NOFIFO := 0  # no FIFO previewer support
+O_CTX8 := 0  # enable 8 contexts
+O_ICONS := 0  # support icons
 
 # convert targets to flags for backwards compatibility
 ifneq ($(filter debug,$(MAKECMDGOALS)),)
@@ -51,6 +59,22 @@ ifeq ($(O_NOMOUSE),1)
 	CPPFLAGS += -DNOMOUSE
 endif
 
+ifeq ($(O_NOBATCH),1)
+	CPPFLAGS += -DNOBATCH
+endif
+
+ifeq ($(O_NOFIFO),1)
+	CPPFLAGS += -DNOFIFO
+endif
+
+ifeq ($(O_CTX8),1)
+	CPPFLAGS += -DCTX8
+endif
+
+ifeq ($(O_ICONS),1)
+	CPPFLAGS += -DICONS
+endif
+
 ifeq ($(shell $(PKG_CONFIG) ncursesw && echo 1),1)
 	CFLAGS_CURSES ?= $(shell $(PKG_CONFIG) --cflags ncursesw)
 	LDLIBS_CURSES ?= $(shell $(PKG_CONFIG) --libs   ncursesw)
@@ -61,7 +85,7 @@ else
 	LDLIBS_CURSES ?= -lncurses
 endif
 
-CFLAGS += -Wall -Wextra
+CFLAGS += -std=c11 -Wall -Wextra -Wshadow
 CFLAGS += $(CFLAGS_OPTIMIZATION)
 CFLAGS += $(CFLAGS_CURSES)
 
@@ -77,6 +101,9 @@ DISTFILES = src nnn.1 Makefile README.md LICENSE
 SRC = src/nnn.c
 HEADERS = src/nnn.h
 BIN = nnn
+DESKTOPFILE = misc/desktop/nnn.desktop
+LOGOSVG = misc/logo/logo.svg
+LOGO64X64 = misc/logo/logo-64x64.png
 
 all: $(BIN)
 
@@ -87,6 +114,19 @@ $(BIN): $(SRC) $(HEADERS)
 debug: $(BIN)
 norl: $(BIN)
 noloc: $(BIN)
+
+install-desktop: $(DESKTOPFILE)
+	$(INSTALL) -m 0755 -d $(DESTDIR)$(DESKTOPPREFIX)
+	$(INSTALL) -m 0644 $(DESKTOPFILE) $(DESTDIR)$(DESKTOPPREFIX)
+	$(INSTALL) -m 0755 -d $(DESTDIR)$(DESKTOPICONPREFIX)/scalable/apps
+	$(INSTALL) -m 0644 $(LOGOSVG) $(DESTDIR)$(DESKTOPICONPREFIX)/scalable/apps/nnn.svg
+	$(INSTALL) -m 0755 -d $(DESTDIR)$(DESKTOPICONPREFIX)/64x64/apps
+	$(INSTALL) -m 0644 $(LOGO64X64) $(DESTDIR)$(DESKTOPICONPREFIX)/64x64/apps/nnn.png
+
+uninstall-desktop:
+	$(RM) $(DESTDIR)$(DESKTOPPREFIX)/$(DESKTOPFILE)
+	$(RM) $(DESTDIR)$(DESKTOPICONPREFIX)/scalable/apps/nnn.svg
+	$(RM) $(DESTDIR)$(DESKTOPICONPREFIX)/64x64/apps/nnn.png
 
 install: all
 	$(INSTALL) -m 0755 -d $(DESTDIR)$(PREFIX)/bin
@@ -121,15 +161,14 @@ upload-local: sign static
 	curl -XPOST 'https://uploads.github.com/repos/jarun/nnn/releases/$(ID)/assets?name=nnn-$(VERSION).tar.gz.sig' \
 	    -H 'Authorization: token $(NNN_SIG_UPLOAD_TOKEN)' -H 'Content-Type: application/pgp-signature' \
 	    --upload-file nnn-$(VERSION).tar.gz.sig
-	tar -zcf $(BIN)-static-$(VERSION).x86-64.tar.gz $(BIN)-static
-	curl -XPOST 'https://uploads.github.com/repos/jarun/nnn/releases/$(ID)/assets?name=$(BIN)-static-$(VERSION).x86-64.tar.gz' \
+	tar -zcf $(BIN)-static-$(VERSION).x86_64.tar.gz $(BIN)-static
+	curl -XPOST 'https://uploads.github.com/repos/jarun/nnn/releases/$(ID)/assets?name=$(BIN)-static-$(VERSION).x86_64.tar.gz' \
 	    -H 'Authorization: token $(NNN_SIG_UPLOAD_TOKEN)' -H 'Content-Type: application/x-sharedlib' \
-	    --upload-file $(BIN)-static-$(VERSION).x86-64.tar.gz
+	    --upload-file $(BIN)-static-$(VERSION).x86_64.tar.gz
 
 clean:
-	$(RM) -f $(BIN) nnn-$(VERSION).tar.gz *.sig \
-	    $(BIN)-static $(BIN)-static-$(VERSION).x86-64.tar.gz
+	$(RM) -f $(BIN) nnn-$(VERSION).tar.gz *.sig $(BIN)-static $(BIN)-static-$(VERSION).x86_64.tar.gz
 
 skip: ;
 
-.PHONY: all install uninstall strip static dist sign upload-local clean
+.PHONY: all install uninstall strip static dist sign upload-local clean install-desktop uninstall-desktop
