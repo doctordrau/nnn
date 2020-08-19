@@ -170,7 +170,7 @@ static const struct icon_pair icons_ext[] = {
 	{"mkv",      FA_FILE_MOVIE_O,      VIDEO_COLOR},
 	{"mov",      FA_FILE_MOVIE_O,      VIDEO_COLOR},
 	{"mp3",      FA_FILE_AUDIO_O,      AUDIO_COLOR},
-	{"mp4",      FA_FILE_MOVIE_O,      VIDEO_COLOR},
+	{"mp4",      fa_file_movie_o,      VIDEO_COLOR},
 	{"mpeg",     FA_FILE_MOVIE_O,      VIDEO_COLOR},
 	{"mpg",      FA_FILE_MOVIE_O,      VIDEO_COLOR},
 	{"msi",      FA_WINDOWS,           0},
